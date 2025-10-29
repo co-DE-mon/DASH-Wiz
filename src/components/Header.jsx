@@ -73,6 +73,43 @@ const Controls = styled.div`
   }
 `;
 
+const DataButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: ${({ theme }) => theme.surfaceAlt};
+  color: ${({ theme }) => theme.text.primary};
+  border: 1px solid ${({ theme }) => theme.border};
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: ${({ theme }) => theme.shadow.small};
+  }
+
+  svg {
+    width: 14px;
+    height: 14px;
+    color: ${({ theme }) => theme.primary};
+  }
+`;
+
+const DataBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: ${({ theme }) => (theme.isDarkMode ? 'rgba(255,255,255,0.04)' : '#f3f6f9')};
+  border-radius: 999px;
+  border: 1px solid ${({ theme }) => theme.borderLight};
+  color: ${({ theme }) => theme.text.secondary};
+  font-size: 12px;
+`;
+
 const MetricsDisplay = styled.div`
   display: flex;
   align-items: center;
@@ -134,21 +171,14 @@ function Header({ executionTime = null, rowCount = null, onOpenSchemaEditor = nu
 
       <Controls>
         {onOpenSchemaEditor && (
-          <button
-            onClick={onOpenSchemaEditor}
-            style={{
-              padding: '8px 12px',
-              background: 'transparent',
-              color: 'var(--theme-text-secondary)',
-              border: '1px solid var(--theme-border)',
-              borderRadius: '6px',
-              fontSize: '13px',
-              cursor: 'pointer'
-            }}
-            title="Open Schema Editor"
-          >
-            Schema
-          </button>
+          <DataButton onClick={onOpenSchemaEditor} title="Open Data Editor" aria-label="Open Data Editor">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 6h16v4H4zM4 14h16v4H4z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M7 6v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M7 14v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <span>Data</span>
+          </DataButton>
         )}
         {(executionTime || rowCount) && (
           <MetricsDisplay>

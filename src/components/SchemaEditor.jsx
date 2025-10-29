@@ -547,5 +547,3 @@ export default function SchemaEditor({ isOpen, onClose }) {
     </Backdrop>
   );
 }
-
-

@@ -187,4 +187,3 @@ export const config = {
   timeout: API_TIMEOUT,
   debug: API_DEBUG,
 };
-

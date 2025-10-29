@@ -60,3 +60,6 @@ wheels/
 # Model files (if you want to keep them out of git)
 # Uncomment if model files are too large for repository
 # models/natural-sql-7b/*.safetensors
+
+# Uploaded SQLite databases (local only)
+uploaded_dbs/

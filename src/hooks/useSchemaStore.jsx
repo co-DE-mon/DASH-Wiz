@@ -120,5 +120,3 @@ export default function useSchemaStore() {
     lastGood: lastGoodRef.current,
   };
 }
-
-

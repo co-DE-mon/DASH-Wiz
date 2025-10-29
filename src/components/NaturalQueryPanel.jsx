@@ -661,4 +661,3 @@ const NaturalQueryPanel = ({
 };
 
 export default NaturalQueryPanel;
-
