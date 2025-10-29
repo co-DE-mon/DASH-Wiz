@@ -16,6 +16,7 @@ import TabsHeader from "./components/TabsHeader";
 import MobileToolbar from "./components/MobileToolbar";
 import LoadingErrorOverlay from "./components/LoadingErrorOverlay";
 import ResizableHandle from "./components/ResizableHandle";
+import SchemaEditor from "./components/SchemaEditor";
 
 import {
   AppContainer,
@@ -374,6 +375,7 @@ function App() {
   // Add state for save query modal
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [saveQueryName, setSaveQueryName] = useState("");
+  const [showSchemaEditor, setShowSchemaEditor] = useState(false);
 
   // Function to handle saving a query
   const handleSaveQuery = (name) => {
@@ -400,6 +402,7 @@ function App() {
         <Header
           executionTime={executionTime}
           rowCount={results ? results.length : null}
+          onOpenSchemaEditor={() => setShowSchemaEditor(true)}
         />
 
         <MainContent>
@@ -532,6 +535,12 @@ function App() {
         onClose={() => setShowSaveModal(false)}
         onSave={handleSaveQuery}
         initialName={saveQueryName}
+      />
+
+      {/* Schema Editor Modal */}
+      <SchemaEditor
+        isOpen={showSchemaEditor}
+        onClose={() => setShowSchemaEditor(false)}
       />
     </ThemeProvider>
   );

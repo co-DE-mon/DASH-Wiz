@@ -8,6 +8,8 @@
 import { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { generateSQL, checkHealth, APIError } from '../services/api';
+import useSchemaStore from '../hooks/useSchemaStore';
+import { schemaToSQL } from '../utils/schemaExtractor';
 
 const PanelContainer = styled.div`
   display: flex;
@@ -399,6 +401,7 @@ const NaturalQueryPanel = ({
   onUseQuery,
   onGenerateComplete 
 }) => {
+  const { schema: storeSchema, isValid } = useSchemaStore();
   const [question, setQuestion] = useState('');
   const [generatedSQL, setGeneratedSQL] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -436,8 +439,22 @@ const NaturalQueryPanel = ({
       return;
     }
 
-    if (!schema || !schema.trim()) {
-      setError('Database schema is not available. Please ensure you have a database connection.');
+    // Determine DDL string from prop or store
+    let ddl = '';
+    try {
+      if (schema && typeof schema === 'string') {
+        ddl = schema;
+      } else if (schema && typeof schema === 'object') {
+        ddl = schemaToSQL(schema);
+      } else {
+        if (!isValid) {
+          setError('Schema is invalid. Please fix it in the Schema Editor.');
+          return;
+        }
+        ddl = schemaToSQL(storeSchema);
+      }
+    } catch (e) {
+      setError('Failed to prepare schema DDL.');
       return;
     }
 
@@ -446,7 +463,7 @@ const NaturalQueryPanel = ({
     setGeneratedSQL(null);
 
     try {
-      const result = await generateSQL(schema, question);
+      const result = await generateSQL(ddl, question);
       setGeneratedSQL(result.sql_query);
       
       if (onGenerateComplete) {
@@ -556,16 +573,7 @@ const NaturalQueryPanel = ({
           </ExampleQuestions>
         )}
 
-        <InputSection>
-          <Label>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7C5 4 4 5 4 7z" stroke="currentColor" strokeWidth="2"/>
-              <path d="M9 4v16M4 15h16" stroke="currentColor" strokeWidth="2"/>
-            </svg>
-            Database Schema
-          </Label>
-          <HintText>The full schema is now available in the left sidebar under Database Schema.</HintText>
-        </InputSection>
+        {/* Database Schema section removed per request */}
 
         <ActionButtons>
           <GenerateButton onClick={handleGenerate} disabled={loading || backendStatus !== 'healthy'}>

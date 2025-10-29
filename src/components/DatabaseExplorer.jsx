@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, memo } from "react";
 import styled from "styled-components";
-import { mockDatabaseSchema } from "../data/schemaData";
+import useSchemaStore from "../hooks/useSchemaStore";
 import { schemaToSQL, tableToSQL } from "../utils/schemaExtractor";
 
 const ExplorerContainer = styled.div`
@@ -722,13 +722,15 @@ const MemoizedDatabaseItem = memo(
 );
 
 // Optimize the main function component
-const DatabaseExplorer = memo(function DatabaseExplorer({ onTableClick, schemaOnly = false }) {
+const DatabaseExplorer = memo(function DatabaseExplorer({ onTableClick, schemaOnly = false, schema: schemaProp = null }) {
+  const { schema, loadFromStorage } = useSchemaStore();
   const [expandedItems, setExpandedItems] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
   const [contextMenuItems, setContextMenuItems] = useState(null);
   const [showSchema, setShowSchema] = useState(true);
   const [schemaExpandedItems, setSchemaExpandedItems] = useState({});
-  const schemaSQL = React.useMemo(() => schemaToSQL(mockDatabaseSchema), []);
+  const activeSchema = schemaProp || schema;
+  const schemaSQL = React.useMemo(() => schemaToSQL(activeSchema), [activeSchema]);
   const [splitPercent, setSplitPercent] = useState(() => {
     try {
       const saved = localStorage.getItem("dbExplorerSchemaSplit");
@@ -751,10 +753,10 @@ const DatabaseExplorer = memo(function DatabaseExplorer({ onTableClick, schemaOn
 
   // Filter function based on search term
   const filterSchemaItems = () => {
-    if (!searchTerm.trim()) return mockDatabaseSchema.databases;
+    if (!searchTerm.trim()) return activeSchema.databases;
 
     // Filter and return new structure containing only matches
-    return mockDatabaseSchema.databases
+    return activeSchema.databases
       .map((db) => ({
         ...db,
         tables: db.tables.filter(
@@ -818,7 +820,7 @@ const DatabaseExplorer = memo(function DatabaseExplorer({ onTableClick, schemaOn
   }, [contextMenuItems]);
 
   // Memoize the filtered data to prevent recalculation on each render
-  const filteredData = React.useMemo(() => filterSchemaItems(), [searchTerm]);
+  const filteredData = React.useMemo(() => filterSchemaItems(), [searchTerm, activeSchema]);
 
   // Persist split
   useEffect(() => {
@@ -890,6 +892,20 @@ const DatabaseExplorer = memo(function DatabaseExplorer({ onTableClick, schemaOn
           </svg>
           {schemaOnly ? 'Database Schema' : 'Database Explorer'}
         </Title>
+        {schemaOnly && (
+          <button
+            style={{ fontSize: '11px', background: 'none', border: '1px solid var(--theme-border)', color: 'var(--theme-text-secondary)', borderRadius: '4px', padding: '4px 8px', cursor: 'pointer', opacity: 0.9, display: 'flex', alignItems: 'center', gap: '4px' }}
+            onClick={() => loadFromStorage()}
+            title="Reload schema from storage"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M21 3v5h-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M3 21v-5h5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+        )}
       </ExplorerHeader>
 
       {!schemaOnly && (
@@ -905,7 +921,7 @@ const DatabaseExplorer = memo(function DatabaseExplorer({ onTableClick, schemaOn
         <SchemaSection style={{ height: '100%', overflow: 'hidden' }}>
           <div style={{ height: "100%", overflow: "auto", paddingRight: 2 }}>
                {/* Schema viewer using the same expandable UI as explorer */}
-               {mockDatabaseSchema.databases.map((database) => (
+               {activeSchema.databases.map((database) => (
                  <DatabaseItem key={`schema_${database.name}`}>
                    <DatabaseHeader
                      onClick={() => toggleSchemaExpand("db", database.name)}
@@ -1023,18 +1039,32 @@ const DatabaseExplorer = memo(function DatabaseExplorer({ onTableClick, schemaOn
                 <path d="M9 4v16M4 15h16" stroke="currentColor" strokeWidth="2"/>
               </svg>
               Database Schema
-              <button
-                style={{ marginLeft: 'auto', fontSize: '11px', background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', opacity: 0.8 }}
-                onClick={() => setShowSchema((v) => !v)}
-                title={showSchema ? 'Hide schema' : 'Show schema'}
-              >
-                {showSchema ? 'Hide' : 'Show'}
-              </button>
+              <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
+                <button
+                  style={{ fontSize: '11px', background: 'none', border: '1px solid var(--theme-border)', color: 'inherit', cursor: 'pointer', opacity: 0.9, borderRadius: 4, padding: '2px 8px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                  onClick={() => loadFromStorage()}
+                  title="Reload schema from storage"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M21 3v5h-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M3 21v-5h5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+                <button
+                  style={{ fontSize: '11px', background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', opacity: 0.8 }}
+                  onClick={() => setShowSchema((v) => !v)}
+                  title={showSchema ? 'Hide schema' : 'Show schema'}
+                >
+                  {showSchema ? 'Hide' : 'Show'}
+                </button>
+              </div>
             </SchemaLabel>
             {showSchema && (
               <div style={{ height: "calc(100% - 30px)", overflow: "auto", paddingRight: 2 }}>
                 {/* Schema viewer using the same expandable UI as explorer */}
-                {mockDatabaseSchema.databases.map((database) => (
+                {activeSchema.databases.map((database) => (
                   <DatabaseItem key={`schema_${database.name}`}>
                     <DatabaseHeader
                       onClick={() => toggleSchemaExpand("db", database.name)}

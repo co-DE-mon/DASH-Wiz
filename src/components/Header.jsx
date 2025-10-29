@@ -107,7 +107,7 @@ const MetricIcon = styled.span`
   align-items: center;
 `;
 
-function Header({ executionTime = null, rowCount = null }) {
+function Header({ executionTime = null, rowCount = null, onOpenSchemaEditor = null }) {
   return (
     <HeaderContainer>
       <Logo>
@@ -133,6 +133,23 @@ function Header({ executionTime = null, rowCount = null }) {
       </Logo>
 
       <Controls>
+        {onOpenSchemaEditor && (
+          <button
+            onClick={onOpenSchemaEditor}
+            style={{
+              padding: '8px 12px',
+              background: 'transparent',
+              color: 'var(--theme-text-secondary)',
+              border: '1px solid var(--theme-border)',
+              borderRadius: '6px',
+              fontSize: '13px',
+              cursor: 'pointer'
+            }}
+            title="Open Schema Editor"
+          >
+            Schema
+          </button>
+        )}
         {(executionTime || rowCount) && (
           <MetricsDisplay>
             {executionTime && (
