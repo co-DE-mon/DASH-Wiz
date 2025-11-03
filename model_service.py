@@ -41,24 +41,45 @@ bnb_config = BitsAndBytesConfig(
 )
 
 # -------- Load model once at startup --------
-MODEL_PATH = "models/natural-sql-7b"
+# Use Hugging Face Hub model instead of local path
+MODEL_PATH = "chatdb/natural-sql-7b"
 logger.info(f"📦 Loading Natural-SQL model from: {MODEL_PATH}")
 
 try:
     tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
     logger.info("✅ Tokenizer loaded successfully")
-    
-    model = AutoModelForCausalLM.from_pretrained(
-        MODEL_PATH,
-        quantization_config=bnb_config,
-        device_map="auto" if torch.cuda.is_available() else None
-    )
+
+    # Ensure pad token is set to eos if missing (common for LLaMA-like models)
+    if tokenizer.pad_token is None and tokenizer.eos_token is not None:
+        tokenizer.pad_token = tokenizer.eos_token
+
+    if torch.cuda.is_available():
+        # Use 4-bit quantization with CUDA
+        model = AutoModelForCausalLM.from_pretrained(
+            MODEL_PATH,
+            quantization_config=bnb_config,
+            device_map="auto"
+        )
+        device = "cuda"
+    else:
+        # CPU fallback: load without 4-bit quantization
+        logger.info("🖥️  CUDA not available; loading model on CPU without 4-bit quantization")
+        model = AutoModelForCausalLM.from_pretrained(
+            MODEL_PATH,
+            device_map=None,
+            torch_dtype=torch.float32
+        )
+        device = "cpu"
+
     logger.info("✅ Model loaded successfully")
-    
-    model = torch.compile(model)
-    logger.info("✅ Model compiled with torch.compile()")
-    
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    # Compile where supported (may be a no-op on some installs)
+    try:
+        model = torch.compile(model)
+        logger.info("✅ Model compiled with torch.compile()")
+    except Exception as compile_err:
+        logger.warning(f"⚠️  torch.compile not applied: {compile_err}")
+
     logger.info(f"🎯 Model ready on device: {device.upper()}")
     logger.info("=" * 60)
     
@@ -113,7 +134,8 @@ SQL Query:"""
             max_length=1024,            # increase total context length
             temperature=0.2,            # lower randomness
             do_sample=False,
-            pad_token_id=tokenizer.eos_token_id
+            eos_token_id=tokenizer.eos_token_id,
+            pad_token_id=tokenizer.pad_token_id
         )
         logger.debug("✅ Model generation complete")
         
