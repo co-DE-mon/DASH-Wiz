@@ -1,15 +1,13 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from transformers import BitsAndBytesConfig
-import torch
+ 
 import logging
 from datetime import datetime
 import os
 from pathlib import Path
 from typing import List, Dict, Any, Optional
-from huggingface_hub import snapshot_download
+ 
 
 # Configure logging
 logging.basicConfig(
@@ -45,6 +43,12 @@ logger.info("🚀 DASH-Wiz Backend Service Starting...")
 # Whether to disable model loading (e.g., on Render free tier)
 MODEL_DISABLED = os.getenv("MODEL_DISABLED", "false").lower() in {"1", "true", "yes"}
 
+# Conditionally import heavy ML libs only when model is enabled
+if not MODEL_DISABLED:
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+    from transformers import BitsAndBytesConfig
+    import torch
+
 # -------- Quantization Configuration --------
 if not MODEL_DISABLED:
     logger.info("⚙️  Configuring 4-bit quantization...")
@@ -73,6 +77,8 @@ def ensure_model_present(model_path: str) -> str:
     repo_id = model_path if "/" in model_path else "chatdb/natural-sql-7b"
     local_dir = Path("models") / "natural-sql-7b"
     try:
+        # Import here to avoid requiring this dependency when MODEL_DISABLED=true
+        from huggingface_hub import snapshot_download
         logger.info(f"⬇️  Downloading model from HF Hub: {repo_id} → {local_dir}")
         snapshot_download(repo_id=repo_id, local_dir=str(local_dir))
         return str(local_dir)

@@ -1,0 +1,14 @@
+fastapi==0.115.2
+uvicorn[standard]==0.32.0
+pydantic==2.9.2
+transformers==4.45.2
+accelerate==1.0.1
+safetensors==0.4.5
+sentencepiece==0.2.0
+huggingface_hub==0.26.2
+bitsandbytes==0.43.3
+torch==2.4.1; python_version<'3.13'
+torch==2.5.1; python_version>='3.13'
+numpy>=1.26.0
+requests>=2.32.0
+
