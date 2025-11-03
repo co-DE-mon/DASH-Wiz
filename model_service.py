@@ -6,6 +6,10 @@ from transformers import BitsAndBytesConfig
 import torch
 import logging
 from datetime import datetime
+import os
+from pathlib import Path
+from typing import List, Dict, Any, Optional
+from huggingface_hub import snapshot_download
 
 # Configure logging
 logging.basicConfig(
@@ -20,10 +24,17 @@ app = FastAPI(
     description="Backend service for generating SQL queries from natural language"
 )
 
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+logging.getLogger().setLevel(LOG_LEVEL)
+
+# Resolve CORS origins from env (comma-separated)
+cors_origins_env = os.getenv("CORS_ORIGINS", "http://localhost:5173")
+allow_origin_list = [o.strip() for o in cors_origins_env.split(",") if o.strip()]
+
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Your Vite dev server
+    allow_origins=allow_origin_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -41,12 +52,36 @@ bnb_config = BitsAndBytesConfig(
 )
 
 # -------- Load model once at startup --------
-# Use Hugging Face Hub model instead of local path
-MODEL_PATH = "chatdb/natural-sql-7b"
-logger.info(f"📦 Loading Natural-SQL model from: {MODEL_PATH}")
+# MODEL_PATH can be a local directory or a Hugging Face repo id
+MODEL_PATH = os.getenv("MODEL_PATH", "models/natural-sql-7b")
+
+def ensure_model_present(model_path: str) -> str:
+    """Ensure the model directory exists; if not, try to download it.
+
+    Returns the resolved local directory path to load from.
+    """
+    path_obj = Path(model_path)
+    if path_obj.exists() and any(path_obj.iterdir()):
+        logger.info(f"📦 Using local model at: {path_obj}")
+        return str(path_obj)
+
+    # If the provided path looks like a HF repo (contains a slash) or path doesn't exist, attempt download
+    repo_id = model_path if "/" in model_path else "chatdb/natural-sql-7b"
+    local_dir = Path("models") / "natural-sql-7b"
+    try:
+        logger.info(f"⬇️  Downloading model from HF Hub: {repo_id} → {local_dir}")
+        snapshot_download(repo_id=repo_id, local_dir=str(local_dir))
+        return str(local_dir)
+    except Exception as dl_err:
+        logger.error(f"❌ Could not download model: {dl_err}")
+        # Fail fast with clear guidance
+        raise
+
+resolved_model_path = ensure_model_present(MODEL_PATH)
+logger.info(f"📦 Loading Natural-SQL model from: {resolved_model_path}")
 
 try:
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
+    tokenizer = AutoTokenizer.from_pretrained(resolved_model_path)
     logger.info("✅ Tokenizer loaded successfully")
 
     # Ensure pad token is set to eos if missing (common for LLaMA-like models)
@@ -56,7 +91,7 @@ try:
     if torch.cuda.is_available():
         # Use 4-bit quantization with CUDA
         model = AutoModelForCausalLM.from_pretrained(
-            MODEL_PATH,
+            resolved_model_path,
             quantization_config=bnb_config,
             device_map="auto"
         )
@@ -65,7 +100,7 @@ try:
         # CPU fallback: load without 4-bit quantization
         logger.info("🖥️  CUDA not available; loading model on CPU without 4-bit quantization")
         model = AutoModelForCausalLM.from_pretrained(
-            MODEL_PATH,
+            resolved_model_path,
             device_map=None,
             torch_dtype=torch.float32
         )
@@ -89,8 +124,6 @@ except Exception as e:
 
 
 # -------- Request & Response Schemas --------
-from typing import List, Dict, Any, Optional
-
 class QueryRequest(BaseModel):
     db_schema: str
     question: str
@@ -164,7 +197,7 @@ async def root():
         "service": "DASH-Wiz Natural-SQL Backend",
         "version": "1.0",
         "status": "running",
-        "model": MODEL_PATH,
+        "model": resolved_model_path,
         "device": device
     }
 
@@ -261,4 +294,6 @@ async def startup_event():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    host = os.getenv("HOST", "0.0.0.0")
+    port = int(os.getenv("PORT", "8000"))
+    uvicorn.run(app, host=host, port=port)

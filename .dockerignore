@@ -1,0 +1,12 @@
+.git
+node_modules
+dist
+.venv
+__pycache__
+models/natural-sql-7b/*
+!models/natural-sql-7b/.keep
+*.log
+.env
+.DS_Store
+
+
