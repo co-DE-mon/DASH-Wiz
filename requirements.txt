@@ -9,5 +9,6 @@ huggingface_hub==0.26.2
 bitsandbytes==0.43.3
 torch==2.4.1
 numpy>=1.26.0
+requests>=2.32.0
 
 
