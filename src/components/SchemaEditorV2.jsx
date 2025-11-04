@@ -76,6 +76,9 @@ const Tab = styled.button`
   background: ${({ $active, theme }) => $active ? theme.hover : 'transparent'};
   color: ${({ theme }) => theme.text.primary};
   cursor: pointer;
+  &:hover {
+    background: ${({ theme }) => theme.hover};
+  }
 `;
 
 const Section = styled.div`
@@ -119,6 +122,13 @@ const Item = styled.div`
   border: 1px solid ${({ theme }) => theme.border};
   border-radius: 6px;
   padding: 8px;
+  background: ${({ theme }) => theme.background};
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.primary};
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
 `;
 
 const Input = styled.input`
@@ -128,6 +138,27 @@ const Input = styled.input`
   background: ${({ theme }) => theme.background};
   color: ${({ theme }) => theme.text.primary};
   flex: 1;
+  
+  &:focus {
+    border-color: ${({ theme }) => theme.primary};
+    outline: none;
+    box-shadow: 0 0 0 2px ${({ theme }) => theme.primary}33;
+  }
+`;
+
+const Select = styled.select`
+  padding: 8px 10px;
+  border: 1px solid ${({ theme }) => theme.border};
+  border-radius: 6px;
+  background: ${({ theme }) => theme.background};
+  color: ${({ theme }) => theme.text.primary};
+  cursor: pointer;
+  
+  &:focus {
+    border-color: ${({ theme }) => theme.primary};
+    outline: none;
+    box-shadow: 0 0 0 2px ${({ theme }) => theme.primary}33;
+  }
 `;
 
 const Small = styled.span`
@@ -148,11 +179,43 @@ const Button = styled.button`
   background: ${({ theme }) => theme.surfaceAlt || 'transparent'};
   color: ${({ theme }) => theme.text.primary};
   cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.primary};
+    background: ${({ theme }) => theme.hover};
+  }
+`;
+
+const AddButton = styled(Button)`
+  background: ${({ theme }) => theme.primary}11;
+  border-color: ${({ theme }) => theme.primary}33;
+  color: ${({ theme }) => theme.primary};
+  padding: 4px 8px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  &:hover {
+    background: ${({ theme }) => theme.primary}22;
+    border-color: ${({ theme }) => theme.primary};
+  }
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
 `;
 
 const Danger = styled(Button)`
   color: #ef4444;
   border-color: rgba(239,68,68,0.5);
+  
+  &:hover {
+    background: #ef444411;
+    border-color: #ef4444;
+  }
 `;
 
 const Footer = styled.div`
@@ -186,6 +249,86 @@ const ErrorBanner = styled.div`
   font-size: 12px;
 `;
 
+const PlusIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 4v16m-8-8h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+  </svg>
+);
+
+const TableIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7C5 4 4 5 4 7z" stroke="currentColor" strokeWidth="2"/>
+    <path d="M4 11h16M12 4v16" stroke="currentColor" strokeWidth="2"/>
+  </svg>
+);
+
+const ColumnIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 4v16M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7C5 4 4 5 4 7z" stroke="currentColor" strokeWidth="2"/>
+  </svg>
+);
+
+// Common SQL column types organized by category
+const COLUMN_TYPES = [
+  // Numeric types
+  'INTEGER',
+  'SMALLINT',
+  'BIGINT',
+  'DECIMAL',
+  'NUMERIC',
+  'FLOAT',
+  'REAL',
+  'DOUBLE PRECISION',
+  'SERIAL',
+  'BIGSERIAL',
+  
+  // Character types
+  'VARCHAR',
+  'CHAR',
+  'TEXT',
+  'NVARCHAR',
+  'NCHAR',
+  'NTEXT',
+  
+  // Date/Time types
+  'DATE',
+  'TIME',
+  'TIMESTAMP',
+  'TIMESTAMPTZ',
+  'INTERVAL',
+  
+  // Boolean type
+  'BOOLEAN',
+  
+  // Binary types
+  'BINARY',
+  'VARBINARY',
+  'BLOB',
+  
+  // Other types
+  'JSON',
+  'JSONB',
+  'UUID',
+  'XML',
+  'ENUM',
+  'ARRAY',
+  'MONEY'
+];
+
+// Templates for types that need parameters
+const COLUMN_TYPE_TEMPLATES = {
+  VARCHAR: 'VARCHAR(255)',
+  NVARCHAR: 'NVARCHAR(255)',
+  CHAR: 'CHAR(1)',
+  NCHAR: 'NCHAR(1)',
+  DECIMAL: 'DECIMAL(10,2)',
+  NUMERIC: 'NUMERIC(10,2)',
+  BINARY: 'BINARY(1)',
+  VARBINARY: 'VARBINARY(255)',
+  ENUM: "ENUM('value1','value2')",
+  ARRAY: 'INTEGER[]' // Example array type
+};
+
 export default function SchemaEditor({ isOpen, onClose }) {
   const { schema, setSchema, resetSchema, importSchema, exportSchema } = useSchemaStore();
   const [activeTab, setActiveTab] = useState('visual');
@@ -193,12 +336,12 @@ export default function SchemaEditor({ isOpen, onClose }) {
   const [jsonError, setJsonError] = useState(null);
   const [filter, setFilter] = useState('');
   const [expandedGroups, setExpandedGroups] = useState({});
+  const [editingNewItem, setEditingNewItem] = useState({ type: null, parentIdx: null });
 
   const working = useMemo(() => JSON.parse(JSON.stringify(schema)), [schema]);
   const [workingSchema, setWorkingSchema] = useState(working);
 
   // Sync working draft when schema changes externally
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const syncFromStore = () => {
     setWorkingSchema(JSON.parse(JSON.stringify(schema)));
     setJsonDraft(JSON.stringify(schema, null, 2));
@@ -208,11 +351,10 @@ export default function SchemaEditor({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   const addDatabase = () => {
-    const name = prompt('Database name');
-    if (!name) return;
     const next = JSON.parse(JSON.stringify(workingSchema));
-    next.databases.push({ name, tables: [] });
+    next.databases.push({ name: '', tables: [] });
     setWorkingSchema(next);
+    setEditingNewItem({ type: 'database', parentIdx: next.databases.length - 1 });
   };
 
   const removeDatabase = (idx) => {
@@ -225,14 +367,16 @@ export default function SchemaEditor({ isOpen, onClose }) {
     const next = JSON.parse(JSON.stringify(workingSchema));
     next.databases[idx].name = name;
     setWorkingSchema(next);
+    if (editingNewItem.type === 'database' && editingNewItem.parentIdx === idx && name) {
+      setEditingNewItem({ type: null, parentIdx: null });
+    }
   };
 
   const addTable = (dbIdx) => {
-    const name = prompt('Table name');
-    if (!name) return;
     const next = JSON.parse(JSON.stringify(workingSchema));
-    next.databases[dbIdx].tables.push({ name, columns: [] });
+    next.databases[dbIdx].tables.push({ name: '', columns: [] });
     setWorkingSchema(next);
+    setEditingNewItem({ type: 'table', parentIdx: dbIdx, tableIdx: next.databases[dbIdx].tables.length - 1 });
   };
 
   const removeTable = (dbIdx, tIdx) => {
@@ -245,15 +389,21 @@ export default function SchemaEditor({ isOpen, onClose }) {
     const next = JSON.parse(JSON.stringify(workingSchema));
     next.databases[dbIdx].tables[tIdx].name = name;
     setWorkingSchema(next);
+    if (editingNewItem.type === 'table' && editingNewItem.parentIdx === dbIdx && editingNewItem.tableIdx === tIdx && name) {
+      setEditingNewItem({ type: null, parentIdx: null });
+    }
   };
 
   const addColumn = (dbIdx, tIdx) => {
-    const name = prompt('Column name');
-    if (!name) return;
-    const type = prompt('Column type (e.g., VARCHAR(100), INTEGER)') || 'TEXT';
     const next = JSON.parse(JSON.stringify(workingSchema));
-    next.databases[dbIdx].tables[tIdx].columns.push({ name, type });
+    next.databases[dbIdx].tables[tIdx].columns.push({ name: '', type: 'VARCHAR(255)' });
     setWorkingSchema(next);
+    setEditingNewItem({ type: 'column', parentIdx: dbIdx, tableIdx: tIdx, columnIdx: next.databases[dbIdx].tables[tIdx].columns.length - 1 });
+    
+    // Auto-expand the parent table
+    const db = next.databases[dbIdx];
+    const table = db.tables[tIdx];
+    toggleGroup(`${db.name}.${table.name}`, true);
   };
 
   const removeColumn = (dbIdx, tIdx, cIdx) => {
@@ -266,6 +416,17 @@ export default function SchemaEditor({ isOpen, onClose }) {
     const next = JSON.parse(JSON.stringify(workingSchema));
     next.databases[dbIdx].tables[tIdx].columns[cIdx][key] = value;
     setWorkingSchema(next);
+    
+    // Clear editing state if this was a new column and both name and type are set
+    if (editingNewItem.type === 'column' && 
+        editingNewItem.parentIdx === dbIdx && 
+        editingNewItem.tableIdx === tIdx && 
+        editingNewItem.columnIdx === cIdx) {
+      const column = next.databases[dbIdx].tables[tIdx].columns[cIdx];
+      if (column.name && column.type) {
+        setEditingNewItem({ type: null, parentIdx: null });
+      }
+    }
   };
 
   const handleImport = async () => {
@@ -382,7 +543,9 @@ export default function SchemaEditor({ isOpen, onClose }) {
               <Section style={{ maxHeight: 180 }}>
                 <SectionHeader>
                   <span>Databases</span>
-                  <Button onClick={addDatabase}>Add Database</Button>
+                  <AddButton onClick={addDatabase}>
+                    <PlusIcon /> Add Database
+                  </AddButton>
                 </SectionHeader>
                 <SectionBody>
                   <List>
@@ -391,9 +554,12 @@ export default function SchemaEditor({ isOpen, onClose }) {
                         <Input
                           value={db.name}
                           onChange={(e) => renameDatabase(dbIdx, e.target.value)}
-                          placeholder="database name"
+                          placeholder="Enter database name..."
+                          autoFocus={editingNewItem.type === 'database' && editingNewItem.parentIdx === dbIdx}
                         />
-                        <Button onClick={() => addTable(dbIdx)}>+ Table</Button>
+                        <AddButton onClick={() => addTable(dbIdx)} title="Add Table">
+                          <TableIcon />
+                        </AddButton>
                         <Danger onClick={() => removeDatabase(dbIdx)}>Remove</Danger>
                       </Item>
                     ))}
@@ -411,15 +577,19 @@ export default function SchemaEditor({ isOpen, onClose }) {
                   <List>
                     {workingSchema.databases.map((db, dbIdx) => (
                       <div key={dbIdx} style={{ width: '100%' }}>
-                        <Small>{db.name}</Small>
+                        <Small>{db.name || 'Unnamed Database'}</Small>
                         {db.tables.map((t, tIdx) => (
                           <Item key={`${dbIdx}-${tIdx}`}>
                             <Input
                               value={t.name}
                               onChange={(e) => renameTable(dbIdx, tIdx, e.target.value)}
-                              placeholder="table name"
+                              placeholder="Enter table name..."
+                              autoFocus={editingNewItem.type === 'table' && editingNewItem.parentIdx === dbIdx && editingNewItem.tableIdx === tIdx}
                             />
-                            <Button onClick={() => addColumn(dbIdx, tIdx)}>+ Column</Button>
+                            <AddButton onClick={() => addColumn(dbIdx, tIdx)} title="Add Column">
+                              <ColumnIcon />
+                            </AddButton>
+                            <Small>{t.columns.length} columns</Small>
                             <Danger onClick={() => removeTable(dbIdx, tIdx)}>Remove</Danger>
                           </Item>
                         ))}
@@ -435,7 +605,7 @@ export default function SchemaEditor({ isOpen, onClose }) {
             {activeTab === 'visual' && (
               <Section style={{ flex: 1, minHeight: 300 }}>
                 <SectionHeader>
-                  <span>Quick Edit Columns</span>
+                  <span>Columns</span>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                     <Input
                       value={filter}
@@ -468,7 +638,10 @@ export default function SchemaEditor({ isOpen, onClose }) {
                                   >
                                     {expanded ? '-' : '+'}
                                   </button>
-                                  <Small style={{ marginLeft: 6 }}>{db.name}.{t.name}</Small>
+                                  <Small style={{ marginLeft: 6 }}>{db.name || 'Unnamed Database'}.{t.name || 'Unnamed Table'}</Small>
+                                  <AddButton onClick={() => addColumn(dbIdx, tIdx)} style={{ marginLeft: 'auto' }}>
+                                    <PlusIcon /> Add Column
+                                  </AddButton>
                                 </Item>
                                 {expanded && t.columns
                                   .filter((c) => matchesFilter(db.name, t.name, c.name))
@@ -477,37 +650,57 @@ export default function SchemaEditor({ isOpen, onClose }) {
                                     <Input
                                       value={c.name}
                                       onChange={(e) => updateColumn(dbIdx, tIdx, cIdx, 'name', e.target.value)}
-                                      placeholder="column name"
+                                      placeholder="Column name..."
+                                      autoFocus={editingNewItem.type === 'column' && 
+                                        editingNewItem.parentIdx === dbIdx && 
+                                        editingNewItem.tableIdx === tIdx && 
+                                        editingNewItem.columnIdx === cIdx}
                                     />
-                                    <Input
-                                      value={c.type}
-                                      onChange={(e) => updateColumn(dbIdx, tIdx, cIdx, 'type', e.target.value)}
-                                      placeholder="type"
-                                      style={{ maxWidth: 180 }}
-                                    />
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                      <input
-                                        type="checkbox"
-                                        checked={!!c.isPrimary}
-                                        onChange={(e) => updateColumn(dbIdx, tIdx, cIdx, 'isPrimary', e.target.checked)}
-                                      />
-                                      <Small>PK</Small>
-                                    </label>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                      <input
-                                        type="checkbox"
-                                        checked={!!c.isForeignKey}
-                                        onChange={(e) => updateColumn(dbIdx, tIdx, cIdx, 'isForeignKey', e.target.checked)}
-                                      />
-                                      <Small>FK</Small>
-                                    </label>
-                                    <Input
-                                      value={c.references || ''}
-                                      onChange={(e) => updateColumn(dbIdx, tIdx, cIdx, 'references', e.target.value)}
-                                      placeholder="references e.g. users(id)"
-                                      style={{ maxWidth: 220 }}
-                                    />
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                    <Select
+                                      value={c.type.split('(')[0].trim()}
+                                      onChange={(e) => {
+                                        const baseType = e.target.value;
+                                        const finalType = COLUMN_TYPE_TEMPLATES[baseType] || baseType;
+                                        const next = JSON.parse(JSON.stringify(workingSchema));
+                                        next.databases[dbIdx].tables[tIdx].columns[cIdx].type = finalType;
+                                        setWorkingSchema(next);
+                                      }}
+                                      style={{ width: 180 }}
+                                    >
+                                      <option value="">Select type...</option>
+                                      {COLUMN_TYPES.map(type => (
+                                        <option key={type} value={type}>
+                                          {COLUMN_TYPE_TEMPLATES[type] || type}
+                                        </option>
+                                      ))}
+                                    </Select>
+                                    <Row>
+                                      <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                        <input
+                                          type="checkbox"
+                                          checked={!!c.isPrimary}
+                                          onChange={(e) => updateColumn(dbIdx, tIdx, cIdx, 'isPrimary', e.target.checked)}
+                                        />
+                                        <Small>PK</Small>
+                                      </label>
+                                      <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                        <input
+                                          type="checkbox"
+                                          checked={!!c.isForeignKey}
+                                          onChange={(e) => updateColumn(dbIdx, tIdx, cIdx, 'isForeignKey', e.target.checked)}
+                                        />
+                                        <Small>FK</Small>
+                                      </label>
+                                      {c.isForeignKey && (
+                                        <Input
+                                          value={c.references || ''}
+                                          onChange={(e) => updateColumn(dbIdx, tIdx, cIdx, 'references', e.target.value)}
+                                          placeholder="table_name(column_name)"
+                                          style={{ maxWidth: 180 }}
+                                        />
+                                      )}
+                                    </Row>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto' }}>
                                       <input
                                         type="checkbox"
                                         checked={c.isNullable !== false}

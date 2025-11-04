@@ -18,7 +18,7 @@ import TabsHeader from "./components/TabsHeader";
 import MobileToolbar from "./components/MobileToolbar";
 import LoadingErrorOverlay from "./components/LoadingErrorOverlay";
 import ResizableHandle from "./components/ResizableHandle";
-import SchemaEditor from "./components/SchemaEditor";
+import SchemaEditor from "./components/SchemaEditorV2";
 
 import {
   AppContainer,
