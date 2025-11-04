@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import styled from 'styled-components';
 import useSchemaStore, { validateSchema } from '../hooks/useSchemaStore';
+import useCSVStore from '../hooks/useCSVStore';
 
 const Backdrop = styled.div`
   position: fixed;
@@ -331,6 +332,7 @@ const COLUMN_TYPE_TEMPLATES = {
 
 export default function SchemaEditor({ isOpen, onClose }) {
   const { schema, setSchema, resetSchema, importSchema, exportSchema } = useSchemaStore();
+  const { importCSV } = useCSVStore();
   const [activeTab, setActiveTab] = useState('visual');
   const [jsonDraft, setJsonDraft] = useState(() => JSON.stringify(schema, null, 2));
   const [jsonError, setJsonError] = useState(null);
@@ -432,23 +434,15 @@ export default function SchemaEditor({ isOpen, onClose }) {
   const handleImport = async () => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = 'application/json';
+    input.accept = '.csv,text/csv';
     input.onchange = async () => {
       const file = input.files && input.files[0];
       if (!file) return;
-      const text = await file.text();
       try {
-        const parsed = JSON.parse(text);
-        const { valid, message } = validateSchema(parsed);
-        if (!valid) {
-          alert(`Invalid schema: ${message}`);
-          return;
-        }
-        setWorkingSchema(parsed);
-        setJsonDraft(JSON.stringify(parsed, null, 2));
-        setJsonError(null);
+        const dataset = await importCSV(file);
+        alert(`Imported CSV dataset: ${dataset.name} (${dataset.rows.length} rows)`);
       } catch (e) {
-        alert(`Failed to import: ${e.message}`);
+        alert(`Failed to import CSV: ${e.message || 'Unknown error'}`);
       }
     };
     input.click();

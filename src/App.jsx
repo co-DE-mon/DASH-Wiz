@@ -19,6 +19,7 @@ import LoadingErrorOverlay from "./components/LoadingErrorOverlay";
 import ResizableHandle from "./components/ResizableHandle";
 import SchemaEditor from "./components/SchemaEditorV2";
 import { SchemaProvider } from "./hooks/useSchemaStore";
+import { CSVProvider } from "./hooks/useCSVStore";
 
 import {
   AppContainer,
@@ -380,6 +381,7 @@ function App() {
 
   return (
     <SchemaProvider>
+    <CSVProvider>
     <ThemeProvider>
       <GlobalStyles />
       <AppContainer className="app-container">
@@ -520,6 +522,7 @@ function App() {
         onClose={() => setShowSchemaEditor(false)}
       />
     </ThemeProvider>
+    </CSVProvider>
     </SchemaProvider>
   );
 }
