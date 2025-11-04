@@ -245,7 +245,7 @@ Switch seamlessly between:
 - Visit http://localhost:8000/docs for API documentation
 
 🚀 **Advanced Usage:**
-- Customize schema in `src/data/schemaData.js`
+- Provide your schema via the Schema Editor in the app or supply it from your backend API (schema shape: `{ databases: [...] }`).
 - Adjust API timeout in `.env`
 - Enable debug logging for troubleshooting
 

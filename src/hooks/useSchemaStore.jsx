@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { mockDatabaseSchema } from '../data/schemaData';
 
 const STORAGE_KEY = 'dashwiz.schema.v1';
 
@@ -56,7 +55,8 @@ export default function useSchemaStore() {
         if (valid) return parsed;
       }
     } catch {}
-    return deepClone(mockDatabaseSchema);
+    // Example/mock schema removed; default to an empty schema shape
+    return { databases: [] };
   });
 
   const lastGoodRef = useRef(schema);
@@ -76,7 +76,8 @@ export default function useSchemaStore() {
   }, [saveToStorage]);
 
   const resetSchema = useCallback(() => {
-    const base = deepClone(mockDatabaseSchema);
+    // Reset to an empty schema (example schema removed)
+    const base = { databases: [] };
     setSchema(base);
   }, [setSchema]);
 

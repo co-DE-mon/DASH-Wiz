@@ -2,8 +2,10 @@ import { useState, useEffect, useRef } from "react";
 import { ThemeProvider } from "./context/ThemeContext";
 import GlobalStyles from "./styles/GlobalStyles";
 import Header from "./components/Header";
-import { predefinedQueries } from "./data/mockData";
 import useSQLQuery from "./hooks/useSQLQuery";
+
+// No predefined queries - use backend or query builder to create queries
+const predefinedQueries = [];
 import useTabs from "./hooks/useTabs";
 import useLayout from "./hooks/useLayout";
 import { nanoid } from "nanoid";
@@ -27,8 +29,8 @@ import {
 } from "./styles/AppStyles";
 
 function App() {
-  const [currentQueryId, setCurrentQueryId] = useState(predefinedQueries[0].id);
-  const [queryText, setQueryText] = useState(predefinedQueries[0].query);
+  const [currentQueryId, setCurrentQueryId] = useState(predefinedQueries[0]?.id || "");
+  const [queryText, setQueryText] = useState(predefinedQueries[0]?.query || "");
   const [activeSidebarTab, setActiveSidebarTab] = useState("explorer");
   const [mobileHistoryOpen, setMobileHistoryOpen] = useState(false);
 

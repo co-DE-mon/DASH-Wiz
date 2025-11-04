@@ -6,8 +6,8 @@ const useTabs = ({ predefinedQueries, executeQuery }) => {
     {
       id: nanoid(),
       name: "New Query",
-      queryId: predefinedQueries[0].id,
-      query: predefinedQueries[0].query,
+      queryId: predefinedQueries[0]?.id || "",
+      query: predefinedQueries[0]?.query || "",
       renamed: false,
     },
   ]);
@@ -47,8 +47,8 @@ const useTabs = ({ predefinedQueries, executeQuery }) => {
     const newTab = {
       id: nanoid(),
       name: "New Query",
-      queryId: predefinedQueries[0].id,
-      query: predefinedQueries[0].query,
+      queryId: predefinedQueries[0]?.id || "",
+      query: predefinedQueries[0]?.query || "",
       renamed: false,
     };
     setQueryTabs([...queryTabs, newTab]);

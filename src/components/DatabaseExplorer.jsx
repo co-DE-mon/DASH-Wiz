@@ -723,7 +723,7 @@ const MemoizedDatabaseItem = memo(
 
 // Optimize the main function component
 const DatabaseExplorer = memo(function DatabaseExplorer({ onTableClick, schemaOnly = false, schema: schemaProp = null }) {
-  const { schema, loadFromStorage } = useSchemaStore();
+  const { schema, loadFromStorage, resetSchema } = useSchemaStore();
   const [expandedItems, setExpandedItems] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
   const [contextMenuItems, setContextMenuItems] = useState(null);
@@ -893,18 +893,35 @@ const DatabaseExplorer = memo(function DatabaseExplorer({ onTableClick, schemaOn
           {schemaOnly ? 'Database Schema' : 'Database Explorer'}
         </Title>
         {schemaOnly && (
-          <button
-            style={{ fontSize: '11px', background: 'none', border: '1px solid var(--theme-border)', color: 'var(--theme-text-secondary)', borderRadius: '4px', padding: '4px 8px', cursor: 'pointer', opacity: 0.9, display: 'flex', alignItems: 'center', gap: '4px' }}
-            onClick={() => loadFromStorage()}
-            title="Reload schema from storage"
-          >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M21 3v5h-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M3 21v-5h5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              style={{ fontSize: '11px', background: 'none', border: '1px solid var(--theme-border)', color: 'var(--theme-text-secondary)', borderRadius: '4px', padding: '4px 8px', cursor: 'pointer', opacity: 0.9, display: 'flex', alignItems: 'center', gap: '4px' }}
+              onClick={() => loadFromStorage()}
+              title="Reload schema from storage"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M21 3v5h-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M3 21v-5h5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+
+            <button
+              style={{ fontSize: '11px', background: 'none', border: '1px solid var(--theme-border)', color: 'var(--theme-text-secondary)', borderRadius: '4px', padding: '4px 8px', cursor: 'pointer', opacity: 0.9, display: 'flex', alignItems: 'center', gap: '4px' }}
+              onClick={() => {
+                try {
+                  localStorage.removeItem('dashwiz.schema.v1');
+                } catch {}
+                try {
+                  resetSchema();
+                } catch {}
+              }}
+              title="Clear schema from storage"
+            >
+              Clear
+            </button>
+          </div>
         )}
       </ExplorerHeader>
 
@@ -915,6 +932,13 @@ const DatabaseExplorer = memo(function DatabaseExplorer({ onTableClick, schemaOn
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
+      )}
+
+      {/* If no schema is present, show a clear placeholder message */}
+      {(!activeSchema || !Array.isArray(activeSchema.databases) || activeSchema.databases.length === 0) && (
+        <div style={{ padding: 16, color: 'var(--theme-text-disabled)', fontSize: 13 }}>
+          No database schema loaded. Please provide a schema via the Schema Editor or connect to your backend.
+        </div>
       )}
 
       {schemaOnly ? (

@@ -16,7 +16,6 @@ import {
 import QuerySelector from "./QuerySelector";
 import NaturalQueryPanel from "./NaturalQueryPanel";
 import { schemaToSQL } from "../utils/schemaExtractor";
-import { mockDatabaseSchema } from "../data/schemaData";
 import styled from "styled-components";
 
 // Lazy load components
@@ -116,9 +115,9 @@ function EditorPanel({
   const [editorMode, setEditorMode] = useState('sql'); // 'sql' or 'natural'
   const [naturalQueryText, setNaturalQueryText] = useState('');
 
-  // Generate schema SQL from mockDatabaseSchema
+  // Generate schema SQL from current schema; examples removed so default to empty
   const schemaSQL = useMemo(() => {
-    return schemaToSQL(mockDatabaseSchema);
+    return schemaToSQL({ databases: [] });
   }, []);
 
   // Handle mode toggle

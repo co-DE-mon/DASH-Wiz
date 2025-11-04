@@ -40,12 +40,9 @@ Utilities for converting database schema to SQL DDL format:
 - `schemaWithDataHints()` - Generate schema with data hints for better AI context
 - `getAllTableNames()` - Get list of all tables
 
-**File:** `src/data/schemaData.js`
+**Note:** Example schema files and example questions have been removed from this repository.
 
-Centralized schema data management:
-- Exported mockDatabaseSchema for consistent access
-- Used by both DatabaseExplorer and Natural Query features
-- Easy to replace with real database connection
+Schema data should be provided by the user or connected via a real database integration. The UI utilities (e.g., `schemaExtractor`) accept a schema object with the shape `{ databases: [...] }` and will operate on that data. Replace or supply your schema through your application state or a backend API.
 
 ### 3. Editor Integration with Mode Toggle ✅
 
@@ -293,10 +290,8 @@ src/
 │   └── useNaturalQueryHistory.jsx     [NEW] - History management hook
 ├── utils/
 │   └── schemaExtractor.js             [NEW] - Schema to SQL DDL converter
-├── data/
-│   └── schemaData.js                  [NEW] - Centralized schema data
 └── services/
-    └── api.js                        [EXISTING] - API service from Phase 1
+   └── api.js                        [EXISTING] - API service from Phase 1
 ```
 
 ## Configuration
@@ -307,9 +302,9 @@ src/
 - `VITE_API_DEBUG` - Debug logging (default: true)
 
 ### Schema Configuration:
-- Edit `src/data/schemaData.js` to match your database schema
-- Schema automatically extracted and converted to SQL DDL
-- Supports multiple databases, tables, columns, foreign keys, etc.
+- Supply your schema via the Schema Editor in the UI or provide it from your backend/API.
+- Schema data should be an object shaped like `{ databases: [...] }` and will be converted to SQL DDL by `schemaExtractor`.
+- No example schema is included - you must provide your own schema through the UI or API.
 
 ## Keyboard Shortcuts Summary
 
@@ -448,9 +443,10 @@ src/
 **Problem:** Schema preview shows "No schema available"
 
 **Solutions:**
-1. Verify `src/data/schemaData.js` is properly imported
-2. Check DatabaseExplorer is using centralized schema
-3. Look for import errors in console
+1. Use the Schema Editor UI to load your schema
+2. Check your backend API is properly configured and responding
+3. Check DatabaseExplorer component state
+4. Look for any console errors
 
 ### History Not Saving:
 

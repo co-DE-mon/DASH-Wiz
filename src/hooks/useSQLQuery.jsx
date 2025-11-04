@@ -1,5 +1,4 @@
 import { useState, useCallback } from "react";
-import { mockResults } from "../data/mockData";
 
 function useSQLQuery() {
   // State for managing query execution
@@ -47,12 +46,9 @@ function useSQLQuery() {
     // Execute after delay
     const timer = setTimeout(() => {
       try {
-        // Get mock results based on current query ID
-        const queryResult = mockResults[queryId] || [];
-
-        if (!queryResult || queryResult.length === 0) {
-          throw new Error("No results found for this query");
-        }
+        // Example/mock data were removed; this hook no longer returns sample results.
+        // By default, return an empty result set so UI can operate without example data.
+        const queryResult = [];
 
         setResults(queryResult);
 
@@ -61,7 +57,7 @@ function useSQLQuery() {
         const timeFormatted = `${time}s`;
         setExecutionTime(timeFormatted);
 
-        // Add to history
+        // Add to history (rowCount = 0 since no sample data)
         const historyItem = {
           id: Date.now(),
           query,
@@ -69,7 +65,7 @@ function useSQLQuery() {
           tabName,
           timestamp: formatDate(new Date()),
           executionTime: timeFormatted,
-          rowCount: queryResult.length,
+          rowCount: 0,
         };
 
         setQueryHistory((prev) => [historyItem, ...prev]);

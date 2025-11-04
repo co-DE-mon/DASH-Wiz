@@ -99,6 +99,9 @@ const QueryDescription = styled.div`
 `;
 
 function QuerySelector({ queries, currentQuery, onQueryChange }) {
+  // If no predefined queries, don't render the selector UI
+  if (!queries || queries.length === 0) return null;
+
   const selectedQuery = queries.find((q) => q.id === currentQuery);
 
   return (
