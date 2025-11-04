@@ -10,7 +10,6 @@ import useTabs from "./hooks/useTabs";
 import useLayout from "./hooks/useLayout";
 import { nanoid } from "nanoid";
 import Sidebar from "./components/Sidebar";
-import SaveQueryModal from "./components/SaveQueryModal";
 import ResultsSection from "./components/ResultsSection";
 import EditorPanel from "./components/EditorPanel";
 import MobileHistoryPanel from "./components/MobileHistoryPanel";
@@ -19,6 +18,7 @@ import MobileToolbar from "./components/MobileToolbar";
 import LoadingErrorOverlay from "./components/LoadingErrorOverlay";
 import ResizableHandle from "./components/ResizableHandle";
 import SchemaEditor from "./components/SchemaEditorV2";
+import { SchemaProvider } from "./hooks/useSchemaStore";
 
 import {
   AppContainer,
@@ -374,30 +374,12 @@ function App() {
     }
   };
 
-  // Add state for save query modal
-  const [showSaveModal, setShowSaveModal] = useState(false);
-  const [saveQueryName, setSaveQueryName] = useState("");
   const [showSchemaEditor, setShowSchemaEditor] = useState(false);
 
-  // Function to handle saving a query
-  const handleSaveQuery = (name) => {
-    if (!name.trim()) return;
-
-    // Here you would normally save to a database or localStorage
-    // For this demo, we'll just show a confirmation
-    alert(`Query "${name}" saved successfully!`);
-    setShowSaveModal(false);
-  };
-
-  // Function to open save query dialog
-  const openSaveQueryDialog = () => {
-    // Use the current active tab name as default
-    const currentTab = queryTabs.find((tab) => tab.id === activeTabId);
-    setSaveQueryName(currentTab?.name || "My Query");
-    setShowSaveModal(true);
-  };
+  // Removed Save Query modal and related handlers
 
   return (
+    <SchemaProvider>
     <ThemeProvider>
       <GlobalStyles />
       <AppContainer className="app-container">
@@ -467,7 +449,6 @@ function App() {
                 handleRenameKeyDown={handleRenameKeyDown}
                 addNewTab={addNewTab}
                 handleQueryChange={handleQueryChange}
-                openSaveQueryDialog={openSaveQueryDialog}
                 handleExecuteQuery={handleExecuteQuery}
                 setNewTabName={setNewTabName}
                 setQueryText={setQueryText}
@@ -531,13 +512,7 @@ function App() {
         />
       </AppContainer>
 
-      {/* Save Query Modal */}
-      <SaveQueryModal
-        isOpen={showSaveModal}
-        onClose={() => setShowSaveModal(false)}
-        onSave={handleSaveQuery}
-        initialName={saveQueryName}
-      />
+      {/* Save Query Modal removed */}
 
       {/* Schema Editor Modal */}
       <SchemaEditor
@@ -545,6 +520,7 @@ function App() {
         onClose={() => setShowSchemaEditor(false)}
       />
     </ThemeProvider>
+    </SchemaProvider>
   );
 }
 

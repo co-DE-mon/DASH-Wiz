@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 const STORAGE_KEY = 'dashwiz.schema.v1';
 
@@ -45,7 +45,9 @@ export function validateSchema(schema) {
   return { valid: true };
 }
 
-export default function useSchemaStore() {
+const SchemaContext = createContext(null);
+
+export function SchemaProvider({ children }) {
   const [schema, setSchemaState] = useState(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -110,7 +112,7 @@ export default function useSchemaStore() {
     if (valid) lastGoodRef.current = schema;
   }, [schema]);
 
-  return {
+  const value = useMemo(() => ({
     schema,
     setSchema,
     resetSchema,
@@ -119,5 +121,19 @@ export default function useSchemaStore() {
     loadFromStorage,
     isValid,
     lastGood: lastGoodRef.current,
-  };
+  }), [schema, setSchema, resetSchema, importSchema, exportSchema, loadFromStorage, isValid]);
+
+  return (
+    <SchemaContext.Provider value={value}>
+      {children}
+    </SchemaContext.Provider>
+  );
+}
+
+export default function useSchemaStore() {
+  const ctx = useContext(SchemaContext);
+  if (!ctx) {
+    throw new Error('useSchemaStore must be used within a SchemaProvider');
+  }
+  return ctx;
 }

@@ -10,7 +10,6 @@ import {
   NewTabButton,
   EditorToolbar,
   RunButton,
-  SaveButton,
   QueryChangeNotification,
 } from "../styles/AppStyles";
 import QuerySelector from "./QuerySelector";
@@ -106,7 +105,6 @@ function EditorPanel({
   handleRenameKeyDown,
   addNewTab,
   handleQueryChange,
-  openSaveQueryDialog,
   handleExecuteQuery,
   setNewTabName,
   setQueryText,
@@ -311,36 +309,6 @@ function EditorPanel({
                 Click "Run SQL" to execute the new query
               </QueryChangeNotification>
             )}
-
-            <SaveButton
-              onClick={openSaveQueryDialog}
-              title="Save this query"
-              style={{ marginLeft: "auto", marginRight: "8px" }}
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M17 21v-8H7v8M7 3v5h8"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <span>Save</span>
-            </SaveButton>
 
             <RunButton onClick={() => handleExecuteQuery(queryText)}>
               <svg
